@@ -19,7 +19,10 @@ class HomeBaseComponent extends Component {
   state = {
     loading: false,
     sensors: [],
-    sensorName: ""
+    sensorTypes: [],
+    sensorName: "",
+    sensorTypeID: "",
+    sensorCheck: false
   };
 
   componentDidMount() {
@@ -36,6 +39,12 @@ class HomeBaseComponent extends Component {
     //   )
     //console.log("item: ", JSON.parse(localStorage.getItem('authUser')));
     this.onListenSensors();
+    this.onListenSensorTypes();
+  }
+
+  componentWillUnmount() {
+    this.props.firebase.sensors(this.props.authUser.uid).off();
+    this.props.firebase.sensorTypes().off();
   }
 
   onListenSensors = () => {
@@ -55,36 +64,92 @@ class HomeBaseComponent extends Component {
             loading: false
           });
         } else {
-          this.setState({ messages: null, loading: false });
+          this.setState({ sensors: null, loading: false });
         }
       });
   };
+  onListenSensorTypes = () => {
+    this.setState({ loading: true });
+    this.props.firebase.sensorTypes().on("value", snapshot => {
+      const sensorTypesObject = snapshot.val();
+      if (sensorTypesObject) {
+        console.log("SENSORTYPES OBJECT: ", sensorTypesObject);
+        const sensorTypesList = Object.keys(sensorTypesObject).map(key => ({
+          ...sensorTypesObject[key],
+          key: key,
+          value: key,
+          // name: "sensorTypeID",
+          text: sensorTypesObject[key].name
+        }));
 
-  onAddSensor = () => {
+        this.setState({
+          sensorTypes: sensorTypesList,
+          loading: false
+        });
+      } else {
+        this.setState({
+          sensorTypes: null,
+          loading: false
+        });
+      }
+    });
+  };
+
+  onAddSensor = event => {
+    event.preventDefault();
     const newKey = this.props.firebase
       .sensors(this.props.authUser.uid)
-      .push({ data: 0, readingDate: this.props.firebase.serverValue.TIMESTAMP }).key;
+      .push({
+        data: 0,
+        readingDate: this.props.firebase.serverValue.TIMESTAMP,
+        name: this.state.sensorName,
+        type: this.state.sensorTypeID
+      }).key;
     console.log("New key", newKey);
     console.log("CLICKED");
   };
 
-  onCreateSensor = event => {
-    event.preventDefault();
-    console.log("Clicked", this.state.sensorName);
+  // onCreateSensor = event => {
+  //   event.preventDefault();
+  //   console.log("Clicked", this.state.sensorName);
+  // };
+
+  // onChangeText = event => {
+  //   this.setState({ sensorName: event.target.value });
+  // };
+
+  // onChangeSensorType = (event, {value}) => {
+  //   console.log("EVENT", value);
+  //  this.setState({sensorTypeID: value})
+  // }
+
+  onChange = (event, result) => {
+    const { name, value } = result || event.target;
+    console.log("NAME", name);
+    console.log("Value", value);
+    this.setState({ [name]: value });
   };
 
-  onChangeText = event => {
-    this.setState({ sensorName: event.target.value });
-  };
+  // onChangeSensorCheck = (event, {checked}) => {
+  //   console.log("EVENT", checked);
+  //  this.setState({sensorCheck: checked})
+  // }
 
-  onTest = uid => {
-    console.log("UID", uid);
-    this.props.firebase.user(uid).update({ isAdmin: true });
-    //this.props.firebase.sensor(uid,"-LzWWsU5VSAjKdRagP6w").update( {data : 2} );
-  };
+  // onTest = uid => {
+  //   console.log("UID", uid);
+  //   this.props.firebase.user(uid).update({ isAdmin: true });
+  //   //this.props.firebase.sensor(uid,"-LzWWsU5VSAjKdRagP6w").update( {data : 2} );
+  // };
 
   render() {
-    const { sensors, sensorName, loading } = this.state;
+    const {
+      sensors,
+      sensorName,
+      loading,
+      sensorTypes,
+      sensorTypeID
+    } = this.state;
+    console.log("sensor type ID", sensorTypeID);
     return (
       <div style={{ margin: "30px" }}>
         <Header as="h2" textAlign="center">
@@ -111,7 +176,9 @@ class HomeBaseComponent extends Component {
                   <Table.Row key={i}>
                     <Table.Cell>{sensor.uid}</Table.Cell>
                     <Table.Cell>{sensor.data}</Table.Cell>
-                    <Table.Cell>{new Date(sensor.readingDate).toLocaleString()}</Table.Cell>
+                    <Table.Cell>
+                      {new Date(sensor.readingDate).toLocaleString()}
+                    </Table.Cell>
 
                     <Table.Cell>
                       <Button primary as={Link} to={{}}>
@@ -122,9 +189,11 @@ class HomeBaseComponent extends Component {
                 ))}
               </Table.Body>
             </Table>
+
             <Divider horizontal section>
               Add new sensor
             </Divider>
+
             <Grid centered columns={2}>
               <Grid.Column>
                 <div>
@@ -132,11 +201,28 @@ class HomeBaseComponent extends Component {
                     <Form.Field>
                       <label>Nazwa sensora</label>
                       <input
+                        name="sensorName"
                         type="text"
                         value={sensorName}
-                        onChange={this.onChangeText}
+                        onChange={this.onChange}
+                        placeholder="think about name of your sensor..."
                       />
                     </Form.Field>
+                    <Form.Select
+                      fluid
+                      label="Type"
+                      name="sensorTypeID"
+                      options={sensorTypes}
+                      value={sensorTypeID}
+                      onChange={this.onChange}
+                      placeholder="choose sensor type"
+                    />
+                    {/* <Form.Checkbox label='I agree to the Terms and Conditions' 
+                          onChange={this.onChangeSensorCheck}
+                          //value={sensorCheck}
+                          checked={sensorCheck }
+
+                      /> */}
                     <Button primary type="submit">
                       Submit
                     </Button>

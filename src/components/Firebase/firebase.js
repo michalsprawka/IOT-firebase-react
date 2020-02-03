@@ -64,9 +64,17 @@ class Firebase {
 
   sensor = (uid, sensorID) => this.db.ref(`users/${uid}/sensors/${sensorID}`);
 
+  actuators = uid => this.db.ref(`users/${uid}/actuators`);
+
+  actuator = (uid, sensorID) => this.db.ref(`users/${uid}/actuators/${sensorID}`);
+
   sensorTypes = () => this.db.ref("sensorTypes");
 
   sensorType = uid => this.db.ref(`sensorTypes/${uid}`);
+
+  actuatorTypes = () => this.db.ref("actuatorTypes");
+
+  actuatorType = uid => this.db.ref(`actuatorTypes/${uid}`);
 }
 
 export default Firebase;
