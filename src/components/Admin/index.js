@@ -37,8 +37,12 @@ class UserListBase extends Component {
       loading: false,
       users: [],
       sensorTypes: [],
+      actuatorTypes: [],
       sensorName: "",
-      sensorDescription: ""
+      sensorDescription: "",
+      actuatorName: "",
+      actuatorDescription: "",
+      modalindex: 0
     };
   }
 
@@ -79,11 +83,34 @@ class UserListBase extends Component {
         });
       }
     });
+
+    this.props.firebase.actuatorTypes().on("value", snapshot => {
+      const actuatorTypesObject = snapshot.val();
+      if (actuatorTypesObject) {
+        console.log("ACTUATORS OBJECT: ", actuatorTypesObject);
+        const actuatorTypesList = Object.keys(actuatorTypesObject).map(key => ({
+          ...actuatorTypesObject[key],
+          uid: key
+        }));
+
+        this.setState({
+          actuatorTypes: actuatorTypesList,
+          loading: false
+        });
+      } else {
+        this.setState({
+          actuatorTypes: null,
+          loading: false
+        });
+      }
+    });
+
   }
 
   componentWillUnmount() {
     this.props.firebase.users().off();
     this.props.firebase.sensorTypes().off();
+    this.props.firebase.actuatorTypes().off();
   }
   // onChangeText1 = event => {
   //   this.setState({ sensorName: event.target.value });
@@ -98,15 +125,23 @@ class UserListBase extends Component {
 
   onCreateSensorType = event => {
     event.preventDefault();
-
-    console.log(
-      "in state",
-      this.state.sensorName,
-      this.state.sensorDescription
-    );
     this.props.firebase.sensorTypes().push({
       name: this.state.sensorName,
       description: this.state.sensorDescription
+    });
+  };
+
+  onCreateActuatorType = event => {
+    event.preventDefault();
+    console.log(
+      "in state",
+      this.state.actuatorName,
+      this.state.actuatorDescription
+    );
+    this.props.firebase.actuatorTypes().push({
+      name: this.state.actuatorName,
+      description: this.state.actuatorDescription,
+      modalindex: this.state.modalindex
     });
   };
 
@@ -116,7 +151,11 @@ class UserListBase extends Component {
       loading,
       sensorName,
       sensorDescription,
-      sensorTypes
+      sensorTypes,
+      actuatorName,
+      actuatorDescription,
+      actuatorTypes,
+      modalindex
     } = this.state;
 
     return (
@@ -209,6 +248,74 @@ class UserListBase extends Component {
               name="sensorDescription"
               type="textarea"
               value={sensorDescription}
+              onChange={this.onChange}
+            />
+          </Form.Field>
+          <Button primary type="submit">
+            Submit
+          </Button>
+        </Form>
+        
+        <Header as="h2">Actuator Types</Header>
+        <Divider horizontal section>
+          ActuatorTypes
+        </Divider>
+        <Table fixed singleLine>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>ID</Table.HeaderCell>
+              <Table.HeaderCell>Type Name</Table.HeaderCell>
+              <Table.HeaderCell>Type Description</Table.HeaderCell>
+              <Table.HeaderCell>Modal Index</Table.HeaderCell>
+              <Table.HeaderCell>Actions</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {actuatorTypes && actuatorTypes.map((type, i) => (
+              <Table.Row key={i}>
+                <Table.Cell>{type.uid}</Table.Cell>
+                <Table.Cell>{type.name}</Table.Cell>
+                <Table.Cell>{type.description}</Table.Cell>
+                <Table.Cell>{type.modalindex}</Table.Cell>
+
+                <Table.Cell>
+                  <Button primary as={Link} to={{}}>
+                    Details
+                  </Button>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table>
+
+        <Divider horizontal section>
+          New Actuator Type
+        </Divider>
+        <Form onSubmit={this.onCreateActuatorType}>
+          <Form.Field>
+            <label>Nazwa aktuatora</label>
+            <input
+              name="actuatorName"
+              type="text"
+              value={actuatorName}
+              onChange={this.onChange}
+            />
+          </Form.Field>
+          <Form.Field>
+            <label>Modal Index</label>
+            <input
+              name="modalindex"
+              type="number"
+              value={modalindex}
+              onChange={this.onChange}
+            />
+          </Form.Field>
+          <Form.Field>
+            <label>Opis aktuatora</label>
+            <textarea
+              name="actuatorDescription"
+              type="textarea"
+              value={actuatorDescription}
               onChange={this.onChange}
             />
           </Form.Field>

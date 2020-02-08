@@ -8,7 +8,9 @@ import {
   Header,
   Table,
   Loader,
-  Divider
+  Divider,
+  Modal,
+  Icon
 } from "semantic-ui-react";
 
 import { AuthUserContext, withAuthorization } from "../Session";
@@ -20,9 +22,14 @@ class HomeBaseComponent extends Component {
     loading: false,
     sensors: [],
     sensorTypes: [],
+    actuatorTypes: [],
+    actuators: [],
     sensorName: "",
     sensorTypeID: "",
-    sensorCheck: false
+    sensorCheck: false,
+    actuatorName: "",
+    actuatorTypeID: "",
+    open: false
   };
 
   componentDidMount() {
@@ -39,12 +46,17 @@ class HomeBaseComponent extends Component {
     //   )
     //console.log("item: ", JSON.parse(localStorage.getItem('authUser')));
     this.onListenSensors();
+    this.onListenActuators();
     this.onListenSensorTypes();
+    this.onListenActuatorTypes();
   }
 
   componentWillUnmount() {
     this.props.firebase.sensors(this.props.authUser.uid).off();
+    this.props.firebase.actuators(this.props.authUser.uid).off();
     this.props.firebase.sensorTypes().off();
+    this.props.firebase.actuatorTypes().off();
+
   }
 
   onListenSensors = () => {
@@ -65,6 +77,28 @@ class HomeBaseComponent extends Component {
           });
         } else {
           this.setState({ sensors: null, loading: false });
+        }
+      });
+  };
+
+  onListenActuators = () => {
+    this.setState({ loading: true });
+    this.props.firebase
+      .actuators(this.props.authUser.uid)
+      .on("value", snapshot => {
+        const actuatorsObject = snapshot.val();
+        if (actuatorsObject) {
+          const actuatorsList = Object.keys(actuatorsObject).map(key => ({
+            ...actuatorsObject[key],
+            uid: key
+          }));
+          console.log("actuatorsList:  ", actuatorsList);
+          this.setState({
+            actuators: actuatorsList,
+            loading: false
+          });
+        } else {
+          this.setState({ actuators: null, loading: false });
         }
       });
   };
@@ -95,6 +129,34 @@ class HomeBaseComponent extends Component {
     });
   };
 
+
+  onListenActuatorTypes = () => {
+    this.setState({ loading: true });
+    this.props.firebase.actuatorTypes().on("value", snapshot => {
+      const actuatorTypesObject = snapshot.val();
+      if (actuatorTypesObject) {
+        console.log("ACTUATORTYPES OBJECT: ", actuatorTypesObject);
+        const actuatorTypesList = Object.keys(actuatorTypesObject).map(key => ({
+          ...actuatorTypesObject[key],
+          key: key,
+          value: key,
+          // name: "sensorTypeID",
+          text: actuatorTypesObject[key].name
+        }));
+
+        this.setState({
+          actuatorTypes: actuatorTypesList,
+          loading: false
+        });
+      } else {
+        this.setState({
+          actuatorTypes: null,
+          loading: false
+        });
+      }
+    });
+  };
+
   onAddSensor = event => {
     event.preventDefault();
     const newKey = this.props.firebase
@@ -106,6 +168,28 @@ class HomeBaseComponent extends Component {
         type: this.state.sensorTypeID
       }).key;
     console.log("New key", newKey);
+    console.log("CLICKED");
+  };
+
+  onAddActuator = event => {
+    event.preventDefault();
+   const actuatorTypeModalindex = this.state.actuatorTypes.find(type => 
+     type.key === this.state.actuatorTypeID
+    ).modalindex;
+    this.props.firebase
+      .actuators(this.props.authUser.uid)
+      .push({
+        state: 0,
+        changingDate: this.props.firebase.serverValue.TIMESTAMP,
+        name: this.state.actuatorName,
+        type: this.state.actuatorTypeID,
+        typeModalIndex: actuatorTypeModalindex
+
+        
+      });
+    console.log("NEW ACTUATORS: ", this.state.actuatorName, this.state.actuatorTypeID)
+   console.log("find modalindex", actuatorTypeModalindex);
+    console.log( "actuatortypes:", this.state.actuatorTypes);
     console.log("CLICKED");
   };
 
@@ -130,6 +214,24 @@ class HomeBaseComponent extends Component {
     this.setState({ [name]: value });
   };
 
+  close = () => {
+    this.setState({open: false});
+  }
+
+  open = () => {
+    this.setState({open: true});
+  }
+
+  toggleState = (uid, state) => {
+    console.log("modal uid: ",uid, "state: ", state )
+    if(state===0){
+      this.props.firebase.actuator(this.props.authUser.uid,uid).update({state: 1})
+    } else {
+      this.props.firebase.actuator(this.props.authUser.uid,uid).update({state: 0})
+    }
+
+  }
+
   // onChangeSensorCheck = (event, {checked}) => {
   //   console.log("EVENT", checked);
   //  this.setState({sensorCheck: checked})
@@ -144,12 +246,45 @@ class HomeBaseComponent extends Component {
   render() {
     const {
       sensors,
+      actuators,
       sensorName,
+      actuatorName,
       loading,
       sensorTypes,
-      sensorTypeID
+      sensorTypeID,
+      actuatorTypeID,
+      actuatorTypes,
+      open
     } = this.state;
-    console.log("sensor type ID", sensorTypeID);
+   // console.log("sensor type ID", sensorTypeID);
+
+  const getModal = (index, state, uid)=>{
+    const ModalArray = [
+      <Modal
+       open = {open} 
+       closeOnDimmerClick={true}
+        onClose={this.close}
+      
+      trigger={<Button onClick={this.open}>Change!</Button>} basic size='small'>
+      <Header icon='lightbulb outline' content='Change state of actuator' />
+        <Modal.Content>
+          <p>
+            Your current state is {state}, would you like change it?
+          </p>
+        </Modal.Content>
+        <Modal.Actions>
+          <Button basic color='red' inverted onClick={this.close}>
+            <Icon name='remove' /> No
+          </Button>
+          <Button color='green' inverted  onClick={()=>this.toggleState(uid, state)}>
+            <Icon name='checkmark' /> Yes
+          </Button>
+        </Modal.Actions>
+      </Modal>
+     ];
+     return ModalArray[index]
+    }
+  
     return (
       <div style={{ margin: "30px" }}>
         <Header as="h2" textAlign="center">
@@ -172,7 +307,7 @@ class HomeBaseComponent extends Component {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {sensors.map((sensor, i) => (
+                {sensors && sensors.map((sensor, i) => (
                   <Table.Row key={i}>
                     <Table.Cell>{sensor.uid}</Table.Cell>
                     <Table.Cell>{sensor.data}</Table.Cell>
@@ -189,6 +324,40 @@ class HomeBaseComponent extends Component {
                 ))}
               </Table.Body>
             </Table>
+                
+            <Divider horizontal section>
+              Your actuators
+            </Divider>
+            <Table singleLine>
+              <Table.Header>
+                <Table.Row>
+                  <Table.HeaderCell>ID</Table.HeaderCell>
+                  <Table.HeaderCell>Current state
+                  </Table.HeaderCell>
+                  <Table.HeaderCell>date of changing</Table.HeaderCell>
+                  <Table.HeaderCell>Actions</Table.HeaderCell>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {actuators && actuators.map((actuator, i) => (
+                  <Table.Row key={i}>
+                    <Table.Cell>{actuator.uid}</Table.Cell>
+                    <Table.Cell>{actuator.state}</Table.Cell>
+                    <Table.Cell>
+                      {new Date(actuator.changingDate).toLocaleString()}
+                    </Table.Cell>
+
+                    <Table.Cell>
+                        {getModal(parseInt(actuator.typeModalIndex),actuator.state, actuator.uid)}
+                      <Button primary as={Link} to={{}}>
+                        Detail
+                      </Button>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table>
+
 
             <Divider horizontal section>
               Add new sensor
@@ -227,6 +396,52 @@ class HomeBaseComponent extends Component {
                       Submit
                     </Button>
                   </Form>
+
+
+                </div>
+              </Grid.Column>
+            </Grid>
+
+
+            <Divider horizontal section>
+              Add new actuator
+            </Divider>
+
+            <Grid centered columns={2}>
+              <Grid.Column>
+                <div>
+                  <Form onSubmit={event => this.onAddActuator(event)}>
+                    <Form.Field>
+                      <label>Nazwa actuatora</label>
+                      <input
+                        name="actuatorName"
+                        type="text"
+                        value={actuatorName}
+                        onChange={this.onChange}
+                        placeholder="think about name of your actuator.."
+                      />
+                    </Form.Field>
+                    <Form.Select
+                      fluid
+                      label="Type"
+                      name="actuatorTypeID"
+                      options={actuatorTypes}
+                      value={actuatorTypeID}
+                      onChange={this.onChange}
+                      placeholder="choose actuator type"
+                    />
+                    {/* <Form.Checkbox label='I agree to the Terms and Conditions' 
+                          onChange={this.onChangeSensorCheck}
+                          //value={sensorCheck}
+                          checked={sensorCheck }
+
+                      /> */}
+                    <Button primary type="submit">
+                      Submit
+                    </Button>
+                  </Form>
+
+
                 </div>
               </Grid.Column>
             </Grid>
