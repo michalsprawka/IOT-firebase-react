@@ -288,7 +288,7 @@ class HomeBaseComponent extends Component {
     return (
       <div style={{ margin: "30px" }}>
         <Header as="h2" textAlign="center">
-          Home Page Jesteś zalogowany jako {this.props.authUser.uid}
+          Home Page Jesteś zalogowany jako {this.props.authUser.username}
         </Header>
         {loading ? (
           <Loader active inline />
@@ -301,6 +301,7 @@ class HomeBaseComponent extends Component {
               <Table.Header>
                 <Table.Row>
                   <Table.HeaderCell>ID</Table.HeaderCell>
+                  <Table.HeaderCell>name</Table.HeaderCell>
                   <Table.HeaderCell>data</Table.HeaderCell>
                   <Table.HeaderCell>date of read</Table.HeaderCell>
                   <Table.HeaderCell>Actions</Table.HeaderCell>
@@ -310,6 +311,7 @@ class HomeBaseComponent extends Component {
                 {sensors && sensors.map((sensor, i) => (
                   <Table.Row key={i}>
                     <Table.Cell>{sensor.uid}</Table.Cell>
+                    <Table.Cell>{sensor.name}</Table.Cell>
                     <Table.Cell>{sensor.data}</Table.Cell>
                     <Table.Cell>
                       {new Date(sensor.readingDate).toLocaleString()}
@@ -332,6 +334,8 @@ class HomeBaseComponent extends Component {
               <Table.Header>
                 <Table.Row>
                   <Table.HeaderCell>ID</Table.HeaderCell>
+                  <Table.HeaderCell>name
+                  </Table.HeaderCell>
                   <Table.HeaderCell>Current state
                   </Table.HeaderCell>
                   <Table.HeaderCell>date of changing</Table.HeaderCell>
@@ -342,6 +346,7 @@ class HomeBaseComponent extends Component {
                 {actuators && actuators.map((actuator, i) => (
                   <Table.Row key={i}>
                     <Table.Cell>{actuator.uid}</Table.Cell>
+                    <Table.Cell>{actuator.name}</Table.Cell>
                     <Table.Cell>{actuator.state}</Table.Cell>
                     <Table.Cell>
                       {new Date(actuator.changingDate).toLocaleString()}
