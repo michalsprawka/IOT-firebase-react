@@ -100,10 +100,10 @@ class SensorDetailBaseComponent extends Component {
   };
 
   onRemoveSensor = () => {
-   // console.log("Remove");
-    // this.props.firebase
-    // .sensor(this.props.authUser.uid, this.state.sensor.uid)
-    // .remove();
+   console.log("Remove");
+    this.props.firebase
+    .sensor(this.props.authUser.uid, this.state.sensor.uid)
+    .remove();
     this.props.history.push(ROUTES.HOME)
   }
   close = () => {
@@ -171,7 +171,7 @@ class SensorDetailBaseComponent extends Component {
            open = {open} 
            closeOnDimmerClick={true}
             onClose={this.close} 
-            trigger={<Button onClick={this.open} color="orange">Basic Modal</Button>} basic size="small">
+            trigger={<Button onClick={this.open} negative>Remove Sensor ?</Button>} basic size="small">
               <Header icon="archive" content="Archive Old Messages" />
               <Modal.Content>
                 <p>
