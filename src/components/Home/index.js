@@ -17,6 +17,8 @@ import { AuthUserContext, withAuthorization } from "../Session";
 
 import { withFirebase } from "../Firebase";
 
+import * as ROUTES from "../../constants/routes";
+
 class HomeBaseComponent extends Component {
   state = {
     loading: false,
@@ -318,7 +320,11 @@ class HomeBaseComponent extends Component {
                     </Table.Cell>
 
                     <Table.Cell>
-                      <Button primary as={Link} to={{}}>
+                      <Button primary as={Link}
+                      to={{
+                        pathname: `${ROUTES.SENSOR_DETAILS}/${sensor.uid}`,
+                        state: { sensor, sensorTypes }
+                      }}>
                         Detail
                       </Button>
                     </Table.Cell>

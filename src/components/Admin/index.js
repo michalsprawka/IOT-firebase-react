@@ -341,6 +341,7 @@ class UserItemBase extends Component {
 
   componentDidMount() {
     if (this.state.user) {
+      console.log("State user: ", this.state.user);
       return;
     }
 
