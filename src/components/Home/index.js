@@ -31,7 +31,9 @@ class HomeBaseComponent extends Component {
     sensorCheck: false,
     actuatorName: "",
     actuatorTypeID: "",
-    open: false
+    open: false,
+    addSensorVisible: false,
+    addSensorLoading: false
   };
 
   componentDidMount() {
@@ -49,7 +51,7 @@ class HomeBaseComponent extends Component {
     //console.log("item: ", JSON.parse(localStorage.getItem('authUser')));
     this.onListenSensors();
     this.onListenActuators();
-    this.onListenSensorTypes();
+   // this.onListenSensorTypes();
     this.onListenActuatorTypes();
   }
 
@@ -105,7 +107,7 @@ class HomeBaseComponent extends Component {
       });
   };
   onListenSensorTypes = () => {
-    this.setState({ loading: true });
+    this.setState({ addSensorLoading: true });
     this.props.firebase.sensorTypes().on("value", snapshot => {
       const sensorTypesObject = snapshot.val();
       if (sensorTypesObject) {
@@ -120,12 +122,12 @@ class HomeBaseComponent extends Component {
 
         this.setState({
           sensorTypes: sensorTypesList,
-          loading: false
+          addSensorLoading: false
         });
       } else {
         this.setState({
           sensorTypes: null,
-          loading: false
+          addSensorLoading: false
         });
       }
     });
@@ -234,6 +236,11 @@ class HomeBaseComponent extends Component {
 
   }
 
+  onAddSensorVisible = () => {
+    this.onListenSensorTypes();
+    this.setState({ addSensorVisible : true });
+  }
+
   // onChangeSensorCheck = (event, {checked}) => {
   //   console.log("EVENT", checked);
   //  this.setState({sensorCheck: checked})
@@ -256,7 +263,10 @@ class HomeBaseComponent extends Component {
       sensorTypeID,
       actuatorTypeID,
       actuatorTypes,
-      open
+      open,
+      addSensorVisible,
+      addSensorLoading
+      
     } = this.state;
    // console.log("sensor type ID", sensorTypeID);
 
@@ -376,8 +386,13 @@ class HomeBaseComponent extends Component {
 
             <Grid centered columns={2}>
               <Grid.Column>
+              {addSensorLoading ? (
+          <Loader active inline />
+            ) : (
+                <>
+                {!addSensorVisible && <Button primary onClick={this.onAddSensorVisible}>Add Sensor</Button>}
                 <div>
-                  <Form onSubmit={event => this.onAddSensor(event)}>
+                  {addSensorVisible && <Form onSubmit={event => this.onAddSensor(event)}>
                     <Form.Field>
                       <label>Nazwa sensora</label>
                       <input
@@ -407,9 +422,12 @@ class HomeBaseComponent extends Component {
                       Submit
                     </Button>
                   </Form>
-
+                  
+                    }
 
                 </div>
+                </>
+                )}
               </Grid.Column>
             </Grid>
 
