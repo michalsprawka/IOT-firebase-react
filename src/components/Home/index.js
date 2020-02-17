@@ -33,7 +33,10 @@ class HomeBaseComponent extends Component {
     actuatorTypeID: "",
     open: false,
     addSensorVisible: false,
-    addSensorLoading: false
+    addSensorLoading: false,
+    addActuatorVisible: false,
+    addActuatorLoading: false,
+
   };
 
   componentDidMount() {
@@ -52,7 +55,7 @@ class HomeBaseComponent extends Component {
     this.onListenSensors();
     this.onListenActuators();
    // this.onListenSensorTypes();
-    this.onListenActuatorTypes();
+  //  this.onListenActuatorTypes();
   }
 
   componentWillUnmount() {
@@ -135,7 +138,7 @@ class HomeBaseComponent extends Component {
 
 
   onListenActuatorTypes = () => {
-    this.setState({ loading: true });
+    this.setState({ addActuatorLoading: true });
     this.props.firebase.actuatorTypes().on("value", snapshot => {
       const actuatorTypesObject = snapshot.val();
       if (actuatorTypesObject) {
@@ -150,12 +153,12 @@ class HomeBaseComponent extends Component {
 
         this.setState({
           actuatorTypes: actuatorTypesList,
-          loading: false
+          addActuatorLoading: false
         });
       } else {
         this.setState({
           actuatorTypes: null,
-          loading: false
+          addActuatorLoading: false
         });
       }
     });
@@ -240,6 +243,10 @@ class HomeBaseComponent extends Component {
     this.onListenSensorTypes();
     this.setState({ addSensorVisible : true });
   }
+  onAddActuatorVisible = () => {
+    this.onListenActuatorTypes();
+    this.setState({ addActuatorVisible : true });
+  }
 
   // onChangeSensorCheck = (event, {checked}) => {
   //   console.log("EVENT", checked);
@@ -265,7 +272,9 @@ class HomeBaseComponent extends Component {
       actuatorTypes,
       open,
       addSensorVisible,
-      addSensorLoading
+      addSensorLoading,
+      addActuatorVisible,
+      addActuatorLoading
       
     } = this.state;
    // console.log("sensor type ID", sensorTypeID);
@@ -435,11 +444,15 @@ class HomeBaseComponent extends Component {
             <Divider horizontal section>
               Add new actuator
             </Divider>
-
             <Grid centered columns={2}>
               <Grid.Column>
+              {addActuatorLoading ? (
+          <Loader active inline />
+            ) : (
+                <>
+                {!addActuatorVisible && <Button primary onClick={this.onAddActuatorVisible}>Add Actuator</Button>}
                 <div>
-                  <Form onSubmit={event => this.onAddActuator(event)}>
+                  {addActuatorVisible &&  <Form onSubmit={event => this.onAddActuator(event)}>
                     <Form.Field>
                       <label>Nazwa actuatora</label>
                       <input
@@ -469,11 +482,16 @@ class HomeBaseComponent extends Component {
                       Submit
                     </Button>
                   </Form>
-
+                  
+                    }
 
                 </div>
+                </>
+                )}
               </Grid.Column>
             </Grid>
+
+            
           </>
         )}
       </div>

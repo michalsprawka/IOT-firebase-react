@@ -23,8 +23,11 @@ const AdminPage = () => (
     <p>The Admin Page is accessible by every signed in admin user.</p>
 
     <Switch>
-      <Route exact path={ROUTES.ADMIN_DETAILS} component={UserItem} />
+    <Route  exact path={ROUTES.ADMIN_SENSORTYPES_DETAILS}  component={SensorTypeItem} />
+      <Route exact path={ROUTES.ADMIN_USERS_DETAILS} component={UserItem} />
+      
       <Route exact path={ROUTES.ADMIN} component={UserList} />
+      
     </Switch>
   </div>
 );
@@ -40,6 +43,8 @@ class UserListBase extends Component {
       actuatorTypes: [],
       sensorName: "",
       sensorDescription: "",
+      detailedSensorDescription: "",
+      code: "",
       actuatorName: "",
       actuatorDescription: "",
       modalindex: 0
@@ -151,6 +156,8 @@ class UserListBase extends Component {
       loading,
       sensorName,
       sensorDescription,
+      detailedSensorDescription,
+      code,
       sensorTypes,
       actuatorName,
       actuatorDescription,
@@ -160,7 +167,7 @@ class UserListBase extends Component {
 
     return (
       <div>
-        <Header as="h2">Users</Header>
+        <Header as="h1" style={{color: "blue"}}>Users</Header>
         {loading ? (
           <Loader active inline />
         ) : (
@@ -184,7 +191,7 @@ class UserListBase extends Component {
                       primary
                       as={Link}
                       to={{
-                        pathname: `${ROUTES.ADMIN}/${user.uid}`,
+                        pathname: `${ROUTES.ADMIN_USERS}/${user.uid}`,
                         state: { user }
                       }}
                     >
@@ -200,7 +207,7 @@ class UserListBase extends Component {
           New User
         </Divider>
         <SignUpLink />
-        <Header as="h2">Sensor Types</Header>
+        <Header as="h1" style={{color: "blue"}}>Sensor Types</Header>
         <Divider horizontal section>
           SensorTypes
         </Divider>
@@ -220,7 +227,10 @@ class UserListBase extends Component {
                 <Table.Cell>{type.name}</Table.Cell>
                 <Table.Cell>{type.description}</Table.Cell>
                 <Table.Cell>
-                  <Button primary as={Link} to={{}}>
+                  <Button primary as={Link} to={{
+                     pathname: `${ROUTES.ADMIN_SENSORTYPES}/${type.uid}`,
+                     state: { type }
+                  }}>
                     Details
                   </Button>
                 </Table.Cell>
@@ -244,10 +254,28 @@ class UserListBase extends Component {
           </Form.Field>
           <Form.Field>
             <label>Opis sensora</label>
-            <textarea
+            <input
               name="sensorDescription"
-              type="textarea"
+              type="text"
               value={sensorDescription}
+              onChange={this.onChange}
+            />
+          </Form.Field>
+          <Form.Field>
+            <label>Szczegółowy Opis sensora</label>
+            <textarea
+              name="detailedSensorDescription"
+              type="textarea"
+              value={detailedSensorDescription}
+              onChange={this.onChange}
+            />
+          </Form.Field>
+          <Form.Field>
+            <label>Program</label>
+            <textarea
+              name="code"
+              type="textarea"
+              value={code}
               onChange={this.onChange}
             />
           </Form.Field>
@@ -256,7 +284,7 @@ class UserListBase extends Component {
           </Button>
         </Form>
         
-        <Header as="h2">Actuator Types</Header>
+        <Header as="h1" style={{color: "blue"}}>Actuator Types</Header>
         <Divider horizontal section>
           ActuatorTypes
         </Divider>
@@ -404,9 +432,88 @@ class UserItemBase extends Component {
     );
   }
 }
+class SensorTypeItemBase extends Component {
+  constructor(props) {
+    super(props);
 
+    this.state = {
+      loading: false,
+      type: null,
+      ...props.location.state
+    };
+  }
+
+  componentDidMount() {
+    // if (this.state.user) {
+    //   console.log("State user: ", this.state.user);
+    //   return;
+    console.log("jestem",this.state)
+    }
+
+  //   this.setState({ loading: true });
+
+  //   this.props.firebase
+  //     .user(this.props.match.params.id)
+  //     .on("value", snapshot => {
+  //       this.setState({
+  //         user: snapshot.val(),
+  //         loading: false
+  //       });
+  //     });
+  // }
+
+  // componentWillUnmount() {
+  //   this.props.firebase.user(this.props.match.params.id).off();
+  // //  this.props.firebase.user().off();
+  // }
+
+  // onSendPasswordResetEmail = () => {
+  //   this.props.firebase.doPasswordReset(this.state.user.email);
+  // };
+
+  render() {
+    const { sensorType, loading } = this.state;
+   
+
+    return (
+      <>
+         <h2>Sensor types</h2>
+        <Card fluid={true}>
+          {loading ? (
+            <Loader active inline="centered" />
+          ) : (
+            <Card.Content>
+              <Card.Header>Sensor Type: {this.state.type.uid} </Card.Header>
+              <Card.Description>
+                {/* {user && (
+                  <div>
+                    <Card.Content>
+                      <Card.Meta>
+                        <span>Username: {user.username}</span>
+                      </Card.Meta>
+                      <Card.Description>{user.email}</Card.Description>
+                      <br />
+                      <Button
+                        primary
+                        type="button"
+                        onClick={this.onSendPasswordResetEmail}
+                      >
+                        Send Password Reset
+                      </Button>
+                    </Card.Content>
+                  </div>
+                )} */}
+              </Card.Description>
+            </Card.Content>
+          )}
+        </Card>
+      </>
+    );
+  }
+}
 const UserList = withFirebase(UserListBase);
 const UserItem = withFirebase(UserItemBase);
+const SensorTypeItem = withFirebase(SensorTypeItemBase);
 
 const condition = authUser =>
   // authUser && authUser.roles.includes(ROLES.ADMIN);
